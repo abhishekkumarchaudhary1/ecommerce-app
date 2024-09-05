@@ -24,7 +24,7 @@ router.get('/get-products', getAllProducts);
 router.get('/:productId', getProductById);
 
 // Update a product by ID
-router.put('/:productId', upload.fields([{ name: 'avatar', maxCount: 1 }]), updateProduct);
+router.put('/:productId', upload.fields([{ name: 'productImage', maxCount: 1 }]), updateProduct);
 
 // Delete a product by ID
 router.delete('/:productId', deleteProduct);
