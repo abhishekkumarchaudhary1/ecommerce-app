@@ -41,10 +41,14 @@ const calculateTotalAmount = async (cartProducts) => {
     let total = 0;
     for (let item of cartProducts) {
         const product = await Product.findById(item.product);
+        if (!product) {
+            throw new ApiError(404, "Product not found");
+        }
         total += product.price * item.quantity;
     }
     return total;
 };
+
 
 // Get cart by user
 export const getCartByUser = asyncHandler(async (req, res) => {
@@ -76,6 +80,39 @@ export const removeFromCart = asyncHandler(async (req, res) => {
     await cart.save();
     return res.status(200).json(new ApiResponse(200, cart, "Product removed from cart"));
 });
+
+// Update product quantity in cart
+export const updateCart = asyncHandler(async (req, res) => {
+    const { productId, quantity } = req.body;
+    const userId = req.user._id;
+
+    // Find the cart for the user
+    const cart = await Cart.findOne({ user: userId });
+    if (!cart) {
+        throw new ApiError(404, "Cart not found");
+    }
+
+    // Find the product in the cart
+    const productInCart = cart.products.find(p => p.product.toString() === productId);
+    if (!productInCart) {
+        throw new ApiError(404, "Product not found in cart");
+    }
+
+    // Update the quantity of the product in the cart
+    productInCart.quantity = quantity;
+
+    // Recalculate total amount using the helper function
+    const totalAmount = await calculateTotalAmount(cart.products);
+
+    // Update the cart's totalAmount
+    cart.totalAmount = totalAmount;
+
+    // Save the cart
+    await cart.save();
+
+    return res.status(200).json(new ApiResponse(200, cart, "Cart updated successfully"));
+});
+
 
 // Clear the cart
 export const clearCart = asyncHandler(async (req, res) => {
